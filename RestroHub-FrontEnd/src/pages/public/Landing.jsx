@@ -24,15 +24,12 @@ import {
 
 const Landing = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // show scroll top 
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 400);
     window.addEventListener('scroll', onScroll);
     onScroll();
-
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -40,10 +37,10 @@ const Landing = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-
   const { isDark, toggle } = useTheme();
+
   // ============================
-  // DATA
+  // NAV & ACTIVE LINK
   // ============================
   const navLinks = [
     { label: 'Features', href: '#features' },
@@ -52,54 +49,74 @@ const Landing = () => {
     { label: 'Testimonials', href: '#testimonials' },
     { label: 'Contact', href: '#contact' },
   ];
-  
-  // active link state
-  const [activeLink, setActiveLink] = useState("#");
-  
-  useEffect(() => {
-    const ids = navLinks.map((link) => link.href.replace("#", ""));
-    const obs = new IntersectionObserver((entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          setActiveLink(`#${entry.target.id}`);
-        }
-      });
-    }), { rootMargin: '-50% 0px -50% 0px' });
 
-    ids.forEach(id => {
+  const [activeLink, setActiveLink] = useState('#');
+
+  useEffect(() => {
+    const ids = navLinks.map((link) => link.href.replace('#', ''));
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveLink(`#${entry.target.id}`);
+          }
+        });
+      },
+      { rootMargin: '-50% 0px -50% 0px' }
+    );
+    ids.forEach((id) => {
       const el = document.getElementById(id);
       if (el) obs.observe(el);
     });
-
     return () => obs.disconnect();
   }, []);
 
-  // Scroll Animation for Customer Flow (user requested insertion near top useEffects)
+  // ========================
+  // SCROLL ANIMATION + DYNAMIC LINE (Up + Down)
+  // ========================
   useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('animate-in');
-
-          // Animate the connecting line
-          const line = document.getElementById('customer-connect-line');
-          if (line) {
-            setTimeout(() => {
-              line.style.height = '100%';
-            }, 300);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate-in');
+          } else {
+            entry.target.classList.remove('animate-in');
           }
-        }
-      });
-    }, { threshold: 0.2 });
+        });
+      },
+      { threshold: 0.2 }
+    );
 
-    // Observe all scroll-animate elements
+    const line = document.getElementById('customer-connect-line');
+
+    const scrollHandler = () => {
+      if (!line) return;
+      const section = document.getElementById('how-it-works');
+      if (!section) return;
+      const rect = section.getBoundingClientRect();
+      const sectionHeight = section.offsetHeight;
+      const scrolled = Math.max(0, -rect.top);
+      const percent = Math.min(100, (scrolled / sectionHeight) * 180);
+      line.style.height = percent + '%';
+    };
+
     document.querySelectorAll('.scroll-animate').forEach((el) => {
       observer.observe(el);
     });
 
-    return () => observer.disconnect();
+    window.addEventListener('scroll', scrollHandler);
+    scrollHandler();
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', scrollHandler);
+    };
   }, []);
 
+  // ============================
+  // DATA
+  // ============================
   const features = [
     {
       icon: QrCode,
@@ -146,101 +163,48 @@ const Landing = () => {
     { num: '04', icon: BarChart3, title: 'Grow Revenue', desc: 'Track analytics and optimize your business.' },
   ];
 
-  // Customer Flow Steps (for the scroll-animated column)
   const customerSteps = [
-    { 
-      num: '01', 
-      icon: QrCode, 
-      title: 'Scan QR Code', 
-      desc: 'Scan the QR code placed on your table to open the digital menu.' 
+    { num: '01', icon: QrCode, title: 'Scan QR Code', desc: 'Scan the QR code placed on your table to open the digital menu.' },
+    { num: '02', icon: Menu, title: 'Browse Menu', desc: 'Explore categories and select your favourite food items.' },
+    { num: '03', icon: ShoppingCart, title: 'Add to Cart', desc: 'Add desired items to cart and adjust quantity as needed.' },
+    { num: '04', icon: UserPlus, title: 'Place Order', desc: 'Confirm your order and enter your table number.' },
+    { num: '05', icon: MessageSquare, title: 'Live Updates', desc: 'Track your order status in real-time (Preparing → Ready → Served).' },
+    { num: '06', icon: CreditCard, title: 'UPI Payment', desc: 'Make secure payment directly via UPI - no cash required.' },
+  ];
+
+  const plans = [
+    {
+      name: 'Starter',
+      price: '₹499',
+      period: '/month',
+      desc: 'Perfect for small restaurants',
+      features: ['2 Branches', '15 Tables', '500 WhatsApp/month', 'Basic Analytics', 'Email Support'],
+      popular: false,
     },
-    { 
-      num: '02', 
-      icon: Menu, 
-      title: 'Browse Menu', 
-      desc: 'Explore categories and select your favourite food items.' 
+    {
+      name: 'Professional',
+      price: '₹999',
+      period: '/month',
+      desc: 'Best for growing businesses',
+      features: ['5 Branches', 'Unlimited Tables', '2000 WhatsApp/month', 'Advanced Analytics', 'Priority Support', 'Custom Domain'],
+      popular: true,
     },
-    { 
-      num: '03', 
-      icon: ShoppingCart, 
-      title: 'Add to Cart', 
-      desc: 'Add desired items to cart and adjust quantity as needed.' 
-    },
-    { 
-      num: '04', 
-      icon: UserPlus, 
-      title: 'Place Order', 
-      desc: 'Confirm your order and enter your table number.' 
-    },
-    { 
-      num: '05', 
-      icon: MessageSquare, 
-      title: 'Live Updates', 
-      desc: 'Track your order status in real-time (Preparing → Ready → Served).' 
-    },
-    { 
-      num: '06', 
-      icon: CreditCard, 
-      title: 'UPI Payment', 
-      desc: 'Make secure payment directly via UPI - no cash required.' 
+    {
+      name: 'Enterprise',
+      price: 'Custom',
+      period: '',
+      desc: 'For restaurant chains',
+      features: ['Unlimited Everything', 'Dedicated Manager', 'Custom Integrations', 'SLA Guarantee', '24/7 Phone Support', 'On-site Training'],
+      popular: false,
     },
   ];
 
-  
-
-const plans = [
-  {
-    name: 'Starter',
-    price: '₹499',
-    period: '/month',
-    desc: 'Perfect for small restaurants',
-    features: [
-      '2 Branches',
-      '15 Tables',
-      '500 WhatsApp/month',
-      'Basic Analytics',
-      'Email Support'
-    ],
-    popular: false,
-  },
-  {
-    name: 'Professional',
-    price: '₹999',
-    period: '/month',
-    desc: 'Best for growing businesses',
-    features: [
-      '5 Branches',
-      'Unlimited Tables',
-      '2000 WhatsApp/month',
-      'Advanced Analytics',
-      'Priority Support',
-      'Custom Domain'
-    ],
-    popular: true,
-  },
-  {
-    name: 'Enterprise',
-    price: 'Custom',
-    period: '',
-    desc: 'For restaurant chains',
-    features: [
-      'Unlimited Everything',
-      'Dedicated Manager',
-      'Custom Integrations',
-      'SLA Guarantee',
-      '24/7 Phone Support',
-      'On-site Training'
-    ],
-    popular: false,
-  },
-];
   const [selectedPlan, setSelectedPlan] = useState(
-  plans.find(plan => plan.popular)?.name || plans[0].name
+    plans.find((plan) => plan.popular)?.name || plans[0].name
   );
-const [contactForm, setContactForm] = useState({
-    name: '', mobile: '', email: '', description: '',
-  });
-  const [contactStatus, setContactStatus] = useState(''); // '', 'sending', 'success', 'error'
+
+  const [contactForm, setContactForm] = useState({ name: '', mobile: '', email: '', description: '' });
+  const [contactStatus, setContactStatus] = useState('');
 
   const handleContactChange = (e) =>
     setContactForm({ ...contactForm, [e.target.name]: e.target.value });
@@ -252,17 +216,17 @@ const [contactForm, setContactForm] = useState({
       const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify({
-  service_id: "service_fgj8bx6" ,      // ← your actual Service ID
-  template_id: "template_j3k2n5c",     // ← your actual Template ID
-  user_id: "-Lly6B-CoO6THDld_",         // ← your actual Public Key
-  template_params: {
-    from_name: contactForm.name,
-    mobile: contactForm.mobile,
-    from_email: contactForm.email,
-    message: contactForm.description,
-  },
-}),
+        body: JSON.stringify({
+          service_id: 'service_fgj8bx6',
+          template_id: 'template_j3k2n5c',
+          user_id: '-Lly6B-CoO6THDld_',
+          template_params: {
+            from_name: contactForm.name,
+            mobile: contactForm.mobile,
+            from_email: contactForm.email,
+            message: contactForm.description,
+          },
+        }),
       });
       if (res.ok) {
         setContactStatus('success');
@@ -272,6 +236,7 @@ const [contactForm, setContactForm] = useState({
       setContactStatus('error');
     }
   };
+
   const testimonials = [
     {
       name: 'Ramesh Patel',
@@ -294,31 +259,31 @@ const [contactForm, setContactForm] = useState({
   ];
 
   const footerColumns = [
-  {
-    title: 'Product',
-    links: [
-      { label: 'Features', href: '#features' },
-      { label: 'How It Works', href: '#how-it-works' },
-      { label: 'Pricing', href: '#pricing' },
-      { label: 'Testimonials', href: '#testimonials' },
-    ],
-  },
-  {
-    title: 'Company',
-    links: [
-      { label: 'About Us', href: '#features' },
-      { label: 'Contact', href: '#testimonials' },
-    ],
-  },
-  {
-    title: 'Legal',
-    links: [
-      { label: 'Privacy Policy', href: '#' },
-      { label: 'Terms of Service', href: '#' },
-      { label: 'Refund Policy', href: '#' },
-    ],
-  },
-];
+    {
+      title: 'Product',
+      links: [
+        { label: 'Features', href: '#features' },
+        { label: 'How It Works', href: '#how-it-works' },
+        { label: 'Pricing', href: '#pricing' },
+        { label: 'Testimonials', href: '#testimonials' },
+      ],
+    },
+    {
+      title: 'Company',
+      links: [
+        { label: 'About Us', href: '#features' },
+        { label: 'Contact', href: '#testimonials' },
+      ],
+    },
+    {
+      title: 'Legal',
+      links: [
+        { label: 'Privacy Policy', href: '#' },
+        { label: 'Terms of Service', href: '#' },
+        { label: 'Refund Policy', href: '#' },
+      ],
+    },
+  ];
 
   const stats = [
     { value: '500+', label: 'Restaurants' },
@@ -333,7 +298,7 @@ const [contactForm, setContactForm] = useState({
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900 dark:text-slate-100">
 
-      {/* Custom Styles for Animation */}
+      {/* Animation Styles */}
       <style dangerouslySetInnerHTML={{
         __html: `
           .scroll-animate {
@@ -348,9 +313,7 @@ const [contactForm, setContactForm] = useState({
         `
       }} />
 
-
-      {/* adding scroll-up */}
-      
+      {/* Scroll to Top Button */}
       {showScrollTop && (
         <button
           type="button"
@@ -379,7 +342,7 @@ const [contactForm, setContactForm] = useState({
               </span>
             </a>
 
-            {/* Desktop Nav Links */}
+            {/* Desktop Nav */}
             <div className="hidden items-center gap-8 md:flex">
               {navLinks.map((link) => (
                 <a
@@ -397,7 +360,6 @@ const [contactForm, setContactForm] = useState({
 
             {/* Desktop CTA */}
             <div className="hidden items-center gap-3 md:flex">
-              {/* Theme Toggle */}
               <button
                 onClick={toggle}
                 aria-label="Toggle dark mode"
@@ -437,7 +399,7 @@ const [contactForm, setContactForm] = useState({
           </div>
         </div>
 
-        {/* Mobile Menu Dropdown */}
+        {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="border-t border-slate-100 bg-white px-4 pb-6 pt-2 dark:border-slate-700 dark:bg-slate-900 md:hidden">
             <div className="flex flex-col gap-1">
@@ -471,41 +433,30 @@ const [contactForm, setContactForm] = useState({
       </nav>
 
       {/* ================================================ */}
-      {/* HERO SECTION                                     */}
+      {/* HERO                                             */}
       {/* ================================================ */}
       <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 via-white to-white pt-28 pb-16 dark:from-slate-800 dark:via-slate-900 dark:to-slate-900 sm:pt-36 sm:pb-24 lg:pt-44 lg:pb-32">
-
-        {/* Decorative Pattern */}
         <div
           className="absolute inset-0 -z-10 opacity-[0.03]"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232563eb' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }}
         />
-
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            {/* Trust Badge */}
             <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 sm:mb-8">
               <Star className="h-4 w-4 fill-blue-500 text-blue-500" />
               Trusted by 5+ Restaurants across India
             </div>
-
-            {/* Heading */}
             <h1 className="mx-auto max-w-4xl text-4xl font-extrabold leading-tight tracking-tight text-slate-900 dark:text-white sm:text-5xl md:text-6xl lg:text-7xl">
               Your Restaurant,{' '}
               <span className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
                 Fully Digital
               </span>
             </h1>
-
-            {/* Subtitle */}
             <p className="mx-auto mt-6 max-w-2xl text-lg font-medium text-slate-600 dark:text-slate-300 sm:mt-8 sm:text-xl">
-              QR code menus, instant UPI payments, WhatsApp order alerts, and
-              powerful analytics — all in one beautiful platform.
+              QR code menus, instant UPI payments, WhatsApp order alerts, and powerful analytics — all in one beautiful platform.
             </p>
-
-            {/* CTA Buttons */}
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:mt-10 sm:flex-row">
               <Link
                 to="/admin"
@@ -519,47 +470,23 @@ const [contactForm, setContactForm] = useState({
                 Watch Demo
               </button>
             </div>
-
-            {/* Social Proof */}
             <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 sm:mt-12">
-              {['No credit card required', 'Setup in 5 minutes', 'Cancel anytime'].map(
-                (text) => (
-                  <span
-                    key={text}
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400"
-                  >
-                    <CheckCircle2 className="h-4 w-4 text-blue-500" />
-                    {text}
-                  </span>
-                )
-              )}
+              {['No credit card required', 'Setup in 5 minutes', 'Cancel anytime'].map((text) => (
+                <span key={text} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">
+                  <CheckCircle2 className="h-4 w-4 text-blue-500" />
+                  {text}
+                </span>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
       {/* ================================================ */}
-      {/* STATS BAR                                        */}
-      {/* ================================================ */}
-      {/* <section className="border-y border-slate-100 bg-white py-10 sm:py-14">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 gap-8 text-center md:grid-cols-4">
-            {stats.map((stat, i) => (
-              <div key={i}>
-                <p className="text-3xl font-extrabold text-blue-600 sm:text-4xl">{stat.value}</p>
-                <p className="mt-1 text-sm font-medium text-slate-500">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section> */}
-
-      {/* ================================================ */}
       {/* FEATURES                                         */}
       {/* ================================================ */}
       <section id="features" className="bg-white py-20 dark:bg-slate-900 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Header */}
           <div className="mx-auto max-w-2xl text-center">
             <span className="mb-3 inline-block rounded-full bg-blue-50 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
               Features
@@ -571,17 +498,13 @@ const [contactForm, setContactForm] = useState({
               Powerful tools designed specifically for Indian restaurants.
             </p>
           </div>
-
-          {/* Grid */}
           <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((feature, i) => (
               <div
                 key={i}
                 className="group rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl dark:border-slate-700 dark:bg-slate-800 dark:hover:border-blue-500"
               >
-                <div
-                  className={`mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl ${feature.color}`}
-                >
+                <div className={`mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl ${feature.color}`}>
                   <feature.icon className="h-7 w-7" />
                 </div>
                 <h3 className="mb-3 text-xl font-bold text-slate-900 dark:text-white">{feature.title}</h3>
@@ -593,7 +516,7 @@ const [contactForm, setContactForm] = useState({
       </section>
 
       {/* ================================================ */}
-      {/* HOW IT WORKS - DUAL FLOW WITH SCROLL ANIMATION */}
+      {/* HOW IT WORKS                                     */}
       {/* ================================================ */}
       <section id="how-it-works" className="bg-slate-50 py-20 dark:bg-slate-800 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -609,7 +532,7 @@ const [contactForm, setContactForm] = useState({
             </p>
           </div>
 
-          {/* Restaurant Owners Flow */}
+          {/* Restaurant Owner Flow */}
           <div className="mb-20">
             <h3 className="text-2xl font-semibold text-center mb-10 text-emerald-600">
               For Restaurant Owners
@@ -633,39 +556,35 @@ const [contactForm, setContactForm] = useState({
             </div>
           </div>
 
-          {/* Customer Flow with Scroll Animation */}
+          {/* Customer Flow - Blue Theme + Scroll Animation */}
           <div>
-            <h3 className="text-2xl font-semibold text-center mb-12 text-violet-600">
+            <h3 className="text-2xl font-semibold text-center mb-12 text-blue-600">
               For Customers
             </h3>
-
             <div className="relative max-w-5xl mx-auto">
-              {/* Vertical Connecting Line */}
-              <div 
+              {/* Animated Vertical Line */}
+              <div
                 id="customer-connect-line"
-                className="absolute left-1/2 top-12 hidden h-0 w-1 bg-gradient-to-b from-violet-400 via-purple-500 to-blue-500 lg:block -translate-x-1/2 rounded-full transition-all duration-1000"
+                className="absolute left-1/2 top-12 hidden h-0 w-1 bg-gradient-to-b from-blue-400 via-blue-500 to-blue-600 lg:block -translate-x-1/2 rounded-full transition-all duration-700"
               />
-
               <div className="space-y-20 relative">
                 {customerSteps.map((step, index) => (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className="scroll-animate group flex flex-col lg:flex-row items-center gap-8 lg:gap-16"
-                    data-index={index}
                   >
-                    {/* Icon Side */}
+                    {/* Icon */}
                     <div className="lg:w-1/2 flex justify-center lg:justify-end">
                       <div className="relative">
-                        <div className="w-28 h-28 rounded-3xl bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center border-4 border-violet-100 dark:border-violet-900 group-hover:scale-110 transition-transform duration-500">
-                          <step.icon className="w-14 h-14 text-violet-600" />
+                        <div className="w-28 h-28 rounded-3xl bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center border-4 border-blue-100 dark:border-blue-900 group-hover:scale-110 transition-transform duration-500">
+                          <step.icon className="w-14 h-14 text-blue-600" />
                         </div>
-                        <div className="absolute -top-4 -right-4 w-10 h-10 rounded-2xl bg-violet-600 text-white flex items-center justify-center text-xl font-bold shadow-lg">
+                        <div className="absolute -top-4 -right-4 w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-bold shadow-lg">
                           {step.num}
                         </div>
                       </div>
                     </div>
-
-                    {/* Content Side */}
+                    {/* Text */}
                     <div className="lg:w-1/2 text-center lg:text-left">
                       <h4 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
                         {step.title}
@@ -698,36 +617,31 @@ const [contactForm, setContactForm] = useState({
               Start free. No credit card required. Upgrade anytime.
             </p>
           </div>
-  
           <div className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-3">
             {plans.map((plan, i) => (
-
-          <button
-          key={i}
-          type="button"
-          onClick={() => setSelectedPlan(plan.name)}
-          className={`relative flex flex-col rounded-2xl p-8 transition-all duration-300 ${
-          selectedPlan === plan.name
-          ? 'z-10 scale-105 border-2 border-blue-600 bg-white shadow-2xl shadow-blue-200/50 dark:bg-slate-800'
-          : 'border border-slate-200 bg-white shadow-sm hover:shadow-lg dark:border-slate-700 dark:bg-slate-800 dark:hover:shadow-slate-700/50'
-          }`}
-          >
-          {selectedPlan === plan.name && (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setSelectedPlan(plan.name)}
+                className={`relative flex flex-col rounded-2xl p-8 transition-all duration-300 ${
+                  selectedPlan === plan.name
+                    ? 'z-10 scale-105 border-2 border-blue-600 bg-white shadow-2xl shadow-blue-200/50 dark:bg-slate-800'
+                    : 'border border-slate-200 bg-white shadow-sm hover:shadow-lg dark:border-slate-700 dark:bg-slate-800'
+                }`}
+              >
+                {selectedPlan === plan.name && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <span className="rounded-full bg-blue-600 px-4 py-1 text-xs font-bold text-white shadow-md">
                       MOST POPULAR
                     </span>
                   </div>
                 )}
-
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white">{plan.name}</h3>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{plan.desc}</p>
-
                 <div className="my-6">
                   <span className="text-4xl font-extrabold text-slate-900 dark:text-white">{plan.price}</span>
                   <span className="text-slate-500 dark:text-slate-400">{plan.period}</span>
                 </div>
-
                 <ul className="mb-8 flex-1 space-y-3">
                   {plan.features.map((f, j) => (
                     <li key={j} className="flex items-center gap-2.5 text-sm text-slate-700 dark:text-slate-300">
@@ -736,13 +650,12 @@ const [contactForm, setContactForm] = useState({
                     </li>
                   ))}
                 </ul>
-
                 <Link
                   to="/admin"
                   className={`flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold transition-all ${
                     selectedPlan === plan.name
                       ? 'bg-blue-600 text-white shadow-md shadow-blue-200 hover:bg-blue-700'
-                      : 'border border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:border-blue-500 dark:hover:bg-blue-900/30 dark:hover:text-blue-300'
+                      : 'border border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200'
                   }`}
                 >
                   Get Started
@@ -767,24 +680,18 @@ const [contactForm, setContactForm] = useState({
               Loved by Restaurant Owners
             </h2>
           </div>
-
           <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
             {testimonials.map((t, i) => (
               <div
                 key={i}
                 className="rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-shadow hover:shadow-lg dark:border-slate-700 dark:bg-slate-700"
               >
-                {/* Stars */}
                 <div className="mb-4 flex gap-1">
-                  {Array(t.rating)
-                    .fill(0)
-                    .map((_, j) => (
-                      <Star key={j} className="h-5 w-5 fill-amber-400 text-amber-400" />
-                    ))}
+                  {Array(t.rating).fill(0).map((_, j) => (
+                    <Star key={j} className="h-5 w-5 fill-amber-400 text-amber-400" />
+                  ))}
                 </div>
-
                 <p className="mb-6 leading-relaxed text-slate-600 dark:text-slate-300">"{t.text}"</p>
-
                 <div className="flex items-center gap-3 border-t border-slate-100 pt-4 dark:border-slate-600">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-600">
                     {t.name.charAt(0)}
@@ -801,7 +708,7 @@ const [contactForm, setContactForm] = useState({
       </section>
 
       {/* ================================================ */}
-      {/* CTA SECTION                                      */}
+      {/* CTA                                              */}
       {/* ================================================ */}
       <section className="bg-white py-20 dark:bg-slate-900 sm:py-28">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
@@ -811,8 +718,7 @@ const [contactForm, setContactForm] = useState({
               Ready to Digitize Your Restaurant?
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-lg text-blue-100/90">
-              Join 5+ restaurants across India already using Restroly to
-              serve customers faster.
+              Join 5+ restaurants across India already using Restroly to serve customers faster.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
@@ -823,14 +729,13 @@ const [contactForm, setContactForm] = useState({
                 <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
-            <p className="mt-4 text-sm text-blue-200/80">
-              No credit card needed · Free forever plan available
-            </p>
+            <p className="mt-4 text-sm text-blue-200/80">No credit card needed · Free forever plan available</p>
           </div>
         </div>
       </section>
+
       {/* ================================================ */}
-      {/* CONTACT SECTION                                  */}
+      {/* CONTACT                                          */}
       {/* ================================================ */}
       <section id="contact" className="bg-slate-50 py-20 dark:bg-slate-800 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -841,14 +746,10 @@ const [contactForm, setContactForm] = useState({
             <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
               Get in Touch
             </h2>
-            <p className="mt-4 text-lg text-slate-600 dark:text-slate-400">
-              Have questions? We'd love to hear from you.
-            </p>
+            <p className="mt-4 text-lg text-slate-600 dark:text-slate-400">Have questions? We'd love to hear from you.</p>
           </div>
-
           <div className="mx-auto mt-12 max-w-xl rounded-2xl border border-slate-100 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <div className="space-y-5">
-              {/* Name */}
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300">
                   Full Name <span className="text-red-500">*</span>
@@ -860,11 +761,9 @@ const [contactForm, setContactForm] = useState({
                   value={contactForm.name}
                   onChange={handleContactChange}
                   placeholder="John Doe"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-900/40"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                 />
               </div>
-
-              {/* Mobile */}
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300">
                   Mobile Number <span className="text-red-500">*</span>
@@ -876,11 +775,9 @@ const [contactForm, setContactForm] = useState({
                   value={contactForm.mobile}
                   onChange={handleContactChange}
                   placeholder="+91 XXXXX XXXXX"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-900/40"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                 />
               </div>
-
-              {/* Email */}
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300">
                   Email Address <span className="text-red-500">*</span>
@@ -892,11 +789,9 @@ const [contactForm, setContactForm] = useState({
                   value={contactForm.email}
                   onChange={handleContactChange}
                   placeholder="you@example.com"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-900/40"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                 />
               </div>
-
-              {/* Description */}
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300">
                   Description <span className="text-red-500">*</span>
@@ -908,21 +803,17 @@ const [contactForm, setContactForm] = useState({
                   value={contactForm.description}
                   onChange={handleContactChange}
                   placeholder="Tell us how we can help..."
-                  className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-900/40"
+                  className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                 />
               </div>
-
-              {/* Submit */}
               <button
                 onClick={handleContactSubmit}
                 disabled={contactStatus === 'sending'}
-                className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-200 transition-all hover:bg-blue-700 disabled:opacity-60 dark:shadow-blue-900/40"
+                className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-200 transition-all hover:bg-blue-700 disabled:opacity-60"
               >
                 {contactStatus === 'sending' ? 'Sending...' : 'Send Message'}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </button>
-
-              {/* Feedback */}
               {contactStatus === 'success' && (
                 <div className="flex items-center gap-2 rounded-xl bg-green-50 px-4 py-3 text-sm font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
                   <CheckCircle2 className="h-5 w-5" />
@@ -931,7 +822,7 @@ const [contactForm, setContactForm] = useState({
               )}
               {contactStatus === 'error' && (
                 <p className="rounded-xl bg-red-50 px-4 py-3 text-center text-sm font-semibold text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                  ❌ Something went wrong. Please try again.
+                  Something went wrong. Please try again.
                 </p>
               )}
             </div>
@@ -945,7 +836,6 @@ const [contactForm, setContactForm] = useState({
       <footer className="border-t border-slate-200 bg-slate-900">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-            {/* Brand */}
             <div className="col-span-2 md:col-span-1">
               <Link to="/" className="flex items-center gap-2">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600">
@@ -959,20 +849,13 @@ const [contactForm, setContactForm] = useState({
                 The all-in-one digital platform for modern Indian restaurants.
               </p>
             </div>
-
-            {/* Link Columns */}
             {footerColumns.map((col) => (
               <div key={col.title}>
-                <h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-300">
-                  {col.title}
-                </h4>
+                <h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-300">{col.title}</h4>
                 <ul className="space-y-3">
                   {col.links.map((link) => (
                     <li key={link.label}>
-                      <a
-                        href={link.href}
-                        className="text-sm text-slate-400 transition-colors hover:text-white"
-                      >
+                      <a href={link.href} className="text-sm text-slate-400 transition-colors hover:text-white">
                         {link.label}
                       </a>
                     </li>
@@ -981,12 +864,8 @@ const [contactForm, setContactForm] = useState({
               </div>
             ))}
           </div>
-
-          {/* Bottom Bar */}
           <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-800 pt-8 sm:flex-row">
-            <p className="text-sm text-slate-500">
-              © {new Date().getFullYear()} Restroly. All rights reserved.
-            </p>
+            <p className="text-sm text-slate-500">© {new Date().getFullYear()} Restroly. All rights reserved.</p>
             <p className="text-sm text-slate-500">Made with ❤️ in India</p>
           </div>
         </div>
